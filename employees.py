@@ -10,7 +10,7 @@ def connect_database():
         cursor=connection.cursor()
     except:
         messagebox.showerror('Error','Database Connectivity Issue try again')
-        return
+        return None,None
     cursor.execute('CREATE DATABASE IF NOT EXISTS inventory_system')
     cursor.execute('USE inventory_system')
     cursor.execute('CREATE TABLE IF NOT EXISTS employee_data (empid INT PRIMARY KEY, name VARCHAR(100), email VARCHAR(100),gender VARCHAR(50),DOB varchar(30),'
@@ -18,11 +18,40 @@ def connect_database():
                    'work_shift VARCHAR(50),address VARCHAR(100),'
                    'doj VARCHAR(30),salary VARCHAR(50),'
                    'usertype VARCHAR(50),password VARCHAR(50))')
+    
+    return cursor,connection
 
 connect_database()
 
+def treeview():
+    cursor,connection=connect_database()
+    if not cursor or not connection:
+        return 
+    cursor.execute('SELECT * from employee_data')
+    employee_records=cursor.fetchall()
+    employee_treeview.delete(*employee_treeview.get_children())
+    print(employee_records)
+    for record in employee_records:
+        employee_treeview.insert('',END,values=record)
+
+
+
+
+def add_employee(empid,name,email,gender,dob,contact,employment_type,education,work_shift,address,doj,salary,user_type,password):
+    if (empid == "" or name == "" or email == "" or gender == "Select Gender" or dob == "" or contact == "" or employment_type == "Select type" or education == "Select Education" or work_shift == "Select Shift" or address== '\n' or doj == "" or salary == "" or user_type == "Select User Type" or password == ""):
+        messagebox.showerror("Error", "All fields are required!")
+    else: 
+        cursor,connection=connect_database()
+        if not cursor or not connection:
+            return 
+        cursor.execute ('INSERT INTO employee_data VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',(empid,name,email,gender,dob,contact,employment_type,education,work_shift,address,doj,salary,user_type,password))  
+        connection.commit()
+        treeview_data()
+        messagebox.showinfo('Success','Data is inserted successfully')
+        
+
 def employee_form(window):
-    global back_image
+    global back_image,employee_treeview
     employee_frame=Frame(window,width=1070,height=567,bg='white')
     employee_frame.place(x=200,y=100)
     heading_label=Label(employee_frame,text='Manage Employee Details',font=('times new roman',16,'bold'),bg='#0f4d7d',fg='white')
@@ -86,6 +115,9 @@ def employee_form(window):
     employee_treeview.column('doj', width=120)
     employee_treeview.column('salary', width=100)
     employee_treeview.column('usertype', width=120)
+
+
+treeview_data()
 
     detail_frame=Frame(employee_frame,bg='white')
     detail_frame.place(x=20,y=280)
@@ -175,7 +207,16 @@ def employee_form(window):
     button_frame.place(x=300,y=520)
 
     add_button = Button(button_frame, text='ADD', font=('times new roman', 12), cursor='hand2', fg='white',
-                        bg='#0f4d7d')
+                        bg='#0f4d7d',command=lambda:add_employee(empid_entry.get(), name_entry.get(), email_entry.get(), 
+                            gender_combobox.get(), dob_date_entry.get(), contact_entry.get(), 
+                            employment_combobox.get(), education_combobox.get(), 
+                            work_shift_combobox.get(), address_text.get(1.0, END), 
+                            doj_date_entry.get(), salary_entry.get(), 
+                            usertype_combobox.get(), password_entry.get())
+)
+    
+    
+    
     add_button.grid(row=0, column=0, padx=30)
 
     update_button = Button(button_frame, text='UPDATE', font=('times new roman', 12), cursor='hand2', fg='white',
